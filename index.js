@@ -31,7 +31,7 @@ function onReceive (info) {
   if (info.socketId in sockets) {
     sockets[info.socketId]._onReceive(info)
   } else {
-    console.error('Unknown socket id: ' + info.socketId)
+    console.error('Unknown socket id: ' + info.socketId, chrome.runtime.lastError.message)
   }
 }
 
@@ -39,7 +39,7 @@ function onReceiveError (info) {
   if (info.socketId in sockets) {
     sockets[info.socketId]._onReceiveError(info.resultCode)
   } else {
-    console.error('Unknown socket id: ' + info.socketId)
+    console.error('Unknown socket id: ' + info.socketId, chrome.runtime.lastError.message)
   }
 }
 
@@ -143,6 +143,11 @@ Socket.prototype.bind = function (port, address, callback) {
   if (typeof callback === 'function') self.once('listening', callback)
 
   chrome.sockets.udp.create(function (createInfo) {
+    if (chrome.runtime.lastError) {
+      self.emit(error, new Error(chrome.runtime.lastError.message))
+      return
+    }
+
     self.id = createInfo.socketId
 
     sockets[self.id] = self
@@ -158,8 +163,8 @@ Socket.prototype.bind = function (port, address, callback) {
           return
         }
         chrome.sockets.udp.getInfo(self.id, function (socketInfo) {
-          if (!socketInfo.localPort || !socketInfo.localAddress) {
-            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id))
+          if (!socketInfo.localPort || !socketInfo.localAddress || chrome.runtime.lastError) {
+            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id + ': ' + chrome.runtime.lastError.message))
             return
           }
 
@@ -289,8 +294,8 @@ Socket.prototype.send = function (buffer, offset, length, port, address, callbac
   var ab = Buffer.concat(list).buffer
 
   chrome.sockets.udp.send(self.id, ab, address, port, function (sendInfo) {
-    if (sendInfo.resultCode < 0) {
-      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode)
+    if (sendInfo.resultCode < 0 || chrome.runtime.lastError) {
+      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + chrome.runtime.lastError.message))
       callback(err)
       self.emit('error', err)
     } else {
@@ -346,7 +351,11 @@ Socket.prototype.close = function () {
   if (self._destroyed) return
 
   delete sockets[self.id]
-  chrome.sockets.udp.close(self.id)
+  chrome.sockets.udp.close(self.id, function () {
+    if (chrome.runtime.lastError) {
+      self.emit(error, new Error(chrome.runtime.lastError.message))
+    }
+  })
   self._destroyed = true
 
   self.emit('close')
