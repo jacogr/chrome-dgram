@@ -31,7 +31,11 @@ function onReceive (info) {
   if (info.socketId in sockets) {
     sockets[info.socketId]._onReceive(info)
   } else {
-    console.error('Unknown socket id: ' + info.socketId, chrome.runtime.lastError.message)
+    console.error('Unknown socket id: ' + info.socketId)
+
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message)
+    }
   }
 }
 
@@ -39,7 +43,11 @@ function onReceiveError (info) {
   if (info.socketId in sockets) {
     sockets[info.socketId]._onReceiveError(info.resultCode)
   } else {
-    console.error('Unknown socket id: ' + info.socketId, chrome.runtime.lastError.message)
+    console.error('Unknown socket id: ' + info.socketId)
+
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError.message)
+    }
   }
 }
 
@@ -159,12 +167,12 @@ Socket.prototype.bind = function (port, address, callback) {
       chrome.sockets.udp.bind(self.id, address, port, function (result) {
         if (result < 0) {
           self.emit('error', new Error('Socket ' + self.id + ' failed to bind. ' +
-            chrome.runtime.lastError.message))
+            (chrome.runtime.lastError ? chrome.runtime.lastError.message : ''))
           return
         }
         chrome.sockets.udp.getInfo(self.id, function (socketInfo) {
           if (!socketInfo.localPort || !socketInfo.localAddress || chrome.runtime.lastError) {
-            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id + ': ' + chrome.runtime.lastError.message))
+            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id + ': ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : ''))
             return
           }
 
@@ -295,7 +303,7 @@ Socket.prototype.send = function (buffer, offset, length, port, address, callbac
 
   chrome.sockets.udp.send(self.id, ab, address, port, function (sendInfo) {
     if (sendInfo.resultCode < 0 || chrome.runtime.lastError) {
-      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + chrome.runtime.lastError.message)
+      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : '')
       callback(err)
       self.emit('error', err)
     } else {
