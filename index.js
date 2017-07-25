@@ -166,13 +166,12 @@ Socket.prototype.bind = function (port, address, callback) {
       if (err) return self.emit('error', err)
       chrome.sockets.udp.bind(self.id, address, port, function (result) {
         if (result < 0) {
-          self.emit('error', new Error('Socket ' + self.id + ' failed to bind. ' +
-            (chrome.runtime.lastError ? chrome.runtime.lastError.message : ''))
+          self.emit('error', new Error('Socket ' + self.id + ' failed to bind. ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : '')))
           return
         }
         chrome.sockets.udp.getInfo(self.id, function (socketInfo) {
           if (!socketInfo.localPort || !socketInfo.localAddress || chrome.runtime.lastError) {
-            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id + ': ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : ''))
+            self.emit('error', new Error('Cannot get local port/address for Socket ' + self.id + ' ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : '')))
             return
           }
 
@@ -303,7 +302,7 @@ Socket.prototype.send = function (buffer, offset, length, port, address, callbac
 
   chrome.sockets.udp.send(self.id, ab, address, port, function (sendInfo) {
     if (sendInfo.resultCode < 0 || chrome.runtime.lastError) {
-      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : '')
+      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ' ' + (chrome.runtime.lastError ? chrome.runtime.lastError.message : ''))
       callback(err)
       self.emit('error', err)
     } else {
