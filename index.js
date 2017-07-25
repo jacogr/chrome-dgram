@@ -295,7 +295,7 @@ Socket.prototype.send = function (buffer, offset, length, port, address, callbac
 
   chrome.sockets.udp.send(self.id, ab, address, port, function (sendInfo) {
     if (sendInfo.resultCode < 0 || chrome.runtime.lastError) {
-      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + chrome.runtime.lastError.message))
+      var err = new Error('Socket ' + self.id + ' send error ' + sendInfo.resultCode + ': ' + chrome.runtime.lastError.message)
       callback(err)
       self.emit('error', err)
     } else {
